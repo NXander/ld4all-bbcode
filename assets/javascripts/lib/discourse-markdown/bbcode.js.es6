@@ -4,18 +4,18 @@ registerOption(
   (siteSettings, opts) => (opts.features["vbulletin-bbcode"] = true)
 );
 
-// function replaceFontColor(text) {
-//   while (
-//     text !==
-//     (text = text.replace(
-//       /\[color=([^\]]+)\]((?:(?!\[color=[^\]]+\]|\[\/color\])[\S\s])*)\[\/color\]/gi,
-//       function(match, p1, p2) {
-//         return `<font color='${p1}'>${p2}</font>`;
-//       }
-//     ))
-//   );
-//   return text;
-// }
+function replaceFontColor(text) {
+  while (
+    text !==
+    (text = text.replace(
+      /\[color=([^\]]+)\]((?:(?!\[color=[^\]]+\]|\[\/color\])[\S\s])*)\[\/color\]/gi,
+      function (match, p1, p2) {
+        return `<font color='${p1}'>${p2}</font>`;
+      }
+    ))
+  );
+  return text;
+}
 
 function wrap(tag, attr, callback) {
   return function (startToken, finishToken, tagInfo) {
@@ -48,10 +48,39 @@ function setupMarkdownIt(md) {
       })
   });
 
-  // ruler.push("color", {
-  //   tag: "color",
-  //   wrap: wrap("font", "color")
-  // });
+  ruler.push("color", {
+    tag: "color",
+    replace: function (state, tagInfo, content) {
+      state.push("col_open", "span", 1)
+        .attrs = [["class", "colored"]]
+      state.push("font_open", "font", 1)
+        .attrs = [["class", "colored"], ["color", tagInfo.attrs._default.trim()]]
+
+      state.push("text", "", 0)
+        .content = content
+
+      state.push("font_close", "font", -1)
+      state.push("col_close", "span", -1)
+      return true;
+    }
+  });
+
+  ruler.push("mod", {
+    tag: "mod",
+    replace: function (state, tagInfo, content) {
+      state.push("mod_open", "span", 1)
+        .attrs = [["class", "mod"]]
+
+      state.push("text", "", 0)
+        .content = I18n.t("bbcode." + "mod_open")
+      state.push("text", "", 0)
+        .content = content
+      state.push("text", "", 0)
+        .content = I18n.t("bbcode." + "mod_close")
+      state.push("mod_close", "span", -1)
+      return true;
+    }
+  });
 
   ruler.push("highlight", {
     tag: "highlight",
@@ -96,23 +125,6 @@ function setupMarkdownIt(md) {
   ruler.push("com", {
     tag: "com",
     wrap: "span.com"
-  });
-
-  ruler.push("mod", {
-    tag: "mod",
-    replace: function (state, tagInfo, content) {
-      state.push("mod_open", "span", 1)
-        .attrs = [["class", "mod"]]
-
-      state.push("text", "", 0)
-        .content = I18n.t("bbcode." + "mod_open")
-      state.push("text", "", 0)
-        .content = content
-      state.push("text", "", 0)
-        .content = I18n.t("bbcode." + "mod_close")
-      state.push("mod_close", "span", -1)
-      return true;
-    }
   });
 
   ruler.push("aname", {
@@ -248,7 +260,8 @@ export function setup(helper) {
     "div.ot",
     "span.smallfont",
     "blockquote.indent",
-    // "font[color=*]",
+    "span.colored",
+    "font[color=*]",
     "font[style=\"font-size:*\"]",
     "ol[type=*]"
   ]);
@@ -266,6 +279,13 @@ export function setup(helper) {
       }
     }
   });
+
+  replaceBBCode("color", contents =>
+    [
+      "span",
+      { class: "colored" }
+    ].concat(contents)
+  );
 
   if (helper.markdownIt) {
     helper.registerPlugin(setupMarkdownIt);
