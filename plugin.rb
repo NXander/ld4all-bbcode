@@ -2,7 +2,7 @@
 
 # name: ld4all-bbcode
 # about: Adds custom BBCode to Discourse for the LD4All community
-# version: 0.1
+# version: 0.2
 # author: Xander
 # url: https://github.com/NXander/ld4all-bbcode
 
