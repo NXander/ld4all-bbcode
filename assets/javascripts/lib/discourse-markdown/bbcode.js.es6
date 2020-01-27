@@ -4,19 +4,6 @@ registerOption(
   (siteSettings, opts) => (opts.features["vbulletin-bbcode"] = true)
 );
 
-function replaceFontColor(text) {
-  while (
-    text !==
-    (text = text.replace(
-      /\[color=([^\]]+)\]((?:(?!\[color=[^\]]+\]|\[\/color\])[\S\s])*)\[\/color\]/gi,
-      function (match, p1, p2) {
-        return `<font color='${p1}'>${p2}</font>`;
-      }
-    ))
-  );
-  return text;
-}
-
 function wrap(tag, attr, callback) {
   return function (startToken, finishToken, tagInfo) {
     startToken.tag = finishToken.tag = tag;
@@ -280,13 +267,6 @@ export function setup(helper) {
     }
   });
 
-  replaceBBCode("color", contents =>
-    [
-      "span",
-      { class: "colored" }
-    ].concat(contents)
-  );
-
   if (helper.markdownIt) {
     helper.registerPlugin(setupMarkdownIt);
     return;
@@ -333,6 +313,13 @@ export function setup(helper) {
   );
   replaceBBCode("highlight", contents =>
     ["div", { class: "highlight" }].concat(contents)
+  );
+
+  replaceBBCode("color", contents =>
+    [
+      "span",
+      { class: "colored" }
+    ].concat(contents)
   );
 
   ["left", "center", "right"].forEach(direction => {
