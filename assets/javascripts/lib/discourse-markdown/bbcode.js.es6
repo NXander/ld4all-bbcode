@@ -106,7 +106,7 @@ function setupMarkdownIt(md) {
 
   ruler.push("fa", {
     tag: "fa",
-    wrap: "span.fa"
+    wrap: "span.faw"
   });
 
   ruler.push("com", {
@@ -240,7 +240,7 @@ export function setup(helper) {
     "span.nd",
     "span.fld",
     "span.hi",
-    "span.fa",
+    "span.faw",
     "span.com",
     "span.mod",
     "div.edit",
@@ -300,7 +300,7 @@ export function setup(helper) {
     ["span", { class: "hi" }].concat(contents)
   );
   replaceBBCode("fa", contents =>
-    ["span", { class: "fa" }].concat(contents)
+    ["span", { class: "faw" }].concat(contents)
   );
   replaceBBCode("com", contents =>
     ["span", { class: "com" }].concat(contents)
