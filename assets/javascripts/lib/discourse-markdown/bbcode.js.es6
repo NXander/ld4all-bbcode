@@ -4,20 +4,30 @@ registerOption(
   (siteSettings, opts) => (opts.features["vbulletin-bbcode"] = true)
 );
 
-function wrap(tag, attr, callback) {
-  return function (startToken, finishToken, tagInfo) {
-    startToken.tag = finishToken.tag = tag;
-    startToken.content = finishToken.content = "";
+function wrap(tag, attrs, callback, startContent, endContent) {
+  return function (startToken, endToken, tagInfo, content) {
+    startToken.tag = endToken.tag = tag;
+    startToken.content = endToken.content = "";
 
     startToken.type = "bbcode_open";
-    finishToken.type = "bbcode_close";
+    endToken.type = "bbcode_close";
 
     startToken.nesting = 1;
-    finishToken.nesting = -1;
+    endToken.nesting = -1;
 
-    startToken.attrs = [
-      [attr, callback ? callback(tagInfo) : tagInfo.attrs._default]
-    ];
+    if (Array.isArray(attrs)) {
+      startToken.attrs = []
+      attrs.forEach(attr =>
+        startToken.attrs.push([attr[0], attr[1] instanceof Function ? attr[1](tagInfo) : attr[1]])
+      );
+    } else {
+      startToken.attrs = [
+        [attrs, callback ? callback(tagInfo) : tagInfo.attrs._default]
+      ];
+    }
+    if (startContent) {
+      startToken.children(startContent)
+    }
   };
 }
 
@@ -30,26 +40,18 @@ function setupMarkdownIt(md) {
       "font",
       "style",
       tagInfo => {
+        const maxSize = 250;
         let size = tagInfo.attrs._default.trim();
-        return "font-size:" + (size > 250 ? 250 : size) + "%";
+        return "font-size:" + (size > maxSize ? maxSize : size) + "%";
       })
   });
 
   ruler.push("color", {
     tag: "color",
-    replace: function (state, tagInfo, content) {
-      state.push("col_open", "span", 1)
-        .attrs = [["class", "colored"]]
-      state.push("font_open", "font", 1)
-        .attrs = [["class", "colored"], ["color", tagInfo.attrs._default.trim()]]
-
-      state.push("text", "", 0)
-        .content = content
-
-      state.push("font_close", "font", -1)
-      state.push("col_close", "span", -1)
-      return true;
-    }
+    wrap: wrap("font", [
+      ["class", "colored"],
+      ["color", tagInfo => tagInfo.attrs._default]
+    ])
   });
 
   ruler.push("mod", {
@@ -59,11 +61,11 @@ function setupMarkdownIt(md) {
         .attrs = [["class", "mod"]]
 
       state.push("text", "", 0)
-        .content = I18n.t("bbcode." + "mod_open")
+        .content = I18n.t("bbcode.mod_open")
       state.push("text", "", 0)
         .content = content
       state.push("text", "", 0)
-        .content = I18n.t("bbcode." + "mod_close")
+        .content = I18n.t("bbcode.mod_close")
       state.push("mod_close", "span", -1)
       return true;
     }
@@ -249,6 +251,7 @@ export function setup(helper) {
     "blockquote.indent",
     "span.colored",
     "font[color=*]",
+    "font.colored",
     "font[style=\"font-size:*\"]",
     "ol[type=*]"
   ]);
@@ -271,121 +274,6 @@ export function setup(helper) {
     helper.registerPlugin(setupMarkdownIt);
     return;
   }
-
-  const builders = requirejs("pretty-text/engines/discourse-markdown/bbcode")
-    .builders;
-  const {
-    register,
-    replaceBBCode,
-    rawBBCode,
-    replaceBBCodeParamsRaw
-  } = builders(helper);
-
-  replaceBBCode("small", contents =>
-    ["span", { style: "font-size:x-small" }].concat(contents)
-  );
-  replaceBBCode("title", contents =>
-    ["span", { class: "djtitle" }].concat(contents)
-  );
-  replaceBBCode("ld", contents =>
-    ["span", { class: "ld" }].concat(contents)
-  );
-  replaceBBCode("nd", contents =>
-    ["span", { class: "nd" }].concat(contents)
-  );
-  replaceBBCode("fld", contents =>
-    ["span", { class: "fld" }].concat(contents)
-  );
-  replaceBBCode("hi", contents =>
-    ["span", { class: "hi" }].concat(contents)
-  );
-  replaceBBCode("fa", contents =>
-    ["span", { class: "faw" }].concat(contents)
-  );
-  replaceBBCode("com", contents =>
-    ["span", { class: "com" }].concat(contents)
-  );
-  replaceBBCode("mod", contents =>
-    [
-      "span",
-      { class: "mod" }
-    ].concat(contents)
-  );
-  replaceBBCode("highlight", contents =>
-    ["div", { class: "highlight" }].concat(contents)
-  );
-
-  replaceBBCode("color", contents =>
-    [
-      "span",
-      { class: "colored" }
-    ].concat(contents)
-  );
-
-  ["left", "center", "right"].forEach(direction => {
-    replaceBBCode(direction, contents =>
-      ["div", { style: "text-align:" + direction }].concat(contents)
-    );
-  });
-
-  replaceBBCode("edit", contents =>
-    [
-      "div",
-      { class: "edit" },
-      ["span", { class: "smallfont" }, "Edit:"]
-    ].concat(contents)
-  );
-
-  replaceBBCode("ot", contents =>
-    [
-      "div",
-      { class: "ot" },
-      ["span", { class: "smallfont" }, "Off Topic:"]
-    ].concat(contents)
-  );
-
-  replaceBBCode("indent", contents => ["blockquote", ["div"].concat(contents)]);
-
-  register("aname", (contents, param) =>
-    ["a", { name: param, "data-bbcode": true }].concat(contents)
-  );
-  register("jumpto", (contents, param) =>
-    ["a", { href: "#" + param, "data-bbcode": true }].concat(contents)
-  );
-  register("rule", (contents, param) => [
-    "div",
-    {
-      style:
-        "margin: 6px 0; height: 0; border-top: 1px solid " +
-        contents +
-        "; margin: auto; width: " +
-        param
-    }
-  ]);
-
-  rawBBCode("noparse", contents => contents);
-  rawBBCode("fphp", contents => [
-    "a",
-    {
-      href: "http://www.php.net/manual-lookup.php?function=" + contents,
-      "data-bbcode": true
-    },
-    contents
-  ]);
-  replaceBBCodeParamsRaw("fphp", (param, contents) => [
-    "a",
-    {
-      href: "http://www.php.net/manual-lookup.php?function=" + param,
-      "data-bbcode": true
-    },
-    contents
-  ]);
-
-  rawBBCode("google", contents => [
-    "a",
-    { href: "http://www.google.com/search?q=" + contents, "data-bbcode": true },
-    contents
-  ]);
 
   helper.replaceBlock({
     start: /\[list=?(\w)?\]([\s\S]*)/gim,
