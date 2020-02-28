@@ -4,8 +4,8 @@ registerOption(
   (siteSettings, opts) => (opts.features["vbulletin-bbcode"] = true)
 );
 
-function wrap(tag, attrs, callback, startContent, endContent) {
-  return function (startToken, endToken, tagInfo, content) {
+function wrap(tag, attrs, callback) {
+  return function (startToken, endToken, tagInfo) {
     startToken.tag = endToken.tag = tag;
     startToken.content = endToken.content = "";
 
@@ -25,16 +25,14 @@ function wrap(tag, attrs, callback, startContent, endContent) {
         [attrs, callback ? callback(tagInfo) : tagInfo.attrs._default]
       ];
     }
-    if (startContent) {
-      startToken.children(startContent)
-    }
   };
 }
 
 function setupMarkdownIt(md) {
-  const ruler = md.inline.bbcode.ruler;
+  const inline = md.inline.bbcode.ruler;
+  const block = md.block.bbcode.ruler;
 
-  ruler.push("size", {
+  inline.push("size", {
     tag: "size",
     wrap: wrap(
       "font",
@@ -46,7 +44,7 @@ function setupMarkdownIt(md) {
       })
   });
 
-  ruler.push("color", {
+  inline.push("color", {
     tag: "color",
     wrap: wrap("font", [
       ["class", "colored"],
@@ -54,7 +52,7 @@ function setupMarkdownIt(md) {
     ])
   });
 
-  ruler.push("mod", {
+  inline.push("mod", {
     tag: "mod",
     replace: function (state, tagInfo, content) {
       state.push("mod_open", "span", 1)
@@ -71,63 +69,108 @@ function setupMarkdownIt(md) {
     }
   });
 
-  ruler.push("highlight", {
+  inline.push("highlight", {
     tag: "highlight",
     wrap: "span.highlight"
   });
 
-  ruler.push("small", {
+  inline.push("small", {
     tag: "small",
     wrap: wrap("span", "style", () => "font-size:x-small")
   });
 
-  ruler.push("title", {
+  inline.push("title", {
     tag: "title",
     wrap: "span.djtitle"
   });
 
-  ruler.push("ld", {
+  inline.push("ld", {
     tag: "ld",
     wrap: "span.ld"
   });
 
-  ruler.push("nd", {
+  inline.push("nd", {
     tag: "nd",
     wrap: "span.nd"
   });
 
-  ruler.push("fld", {
+  inline.push("fld", {
     tag: "fld",
     wrap: "span.fld"
   });
 
-  ruler.push("hi", {
+  inline.push("hi", {
     tag: "hi",
     wrap: "span.hi"
   });
 
-  ruler.push("fa", {
+  inline.push("fa", {
     tag: "fa",
     wrap: "span.faw"
   });
 
-  ruler.push("com", {
+  inline.push("com", {
     tag: "com",
     wrap: "span.com"
   });
 
-  ruler.push("aname", {
+  inline.push("aname", {
     tag: "aname",
     wrap: wrap("a", "name")
   });
 
-  ruler.push("jumpto", {
+  inline.push("jumpto", {
     tag: "jumpto",
     wrap: wrap("a", "href", tagInfo => "#" + tagInfo.attrs._default)
   });
 
+  block.push("color", {
+    tag: "color",
+    before: function(state, tagInfo) {
+      state.push("font_open", "font", 1)
+        .attrs = [["class", "colored"], ["color", tagInfo.attrs._default]];
+    },
+    after: function(state) {
+      state.push("font_close", "font", -1);
+    }
+  });
+
+  block.push("ld", {
+    tag: "ld",
+    wrap: "span.ld"
+  });
+
+  block.push("nd", {
+    tag: "nd",
+    wrap: "span.nd"
+  });
+
+  block.push("fld", {
+    tag: "fld",
+    wrap: "span.fld"
+  });
+
+  block.push("hi", {
+    tag: "hi",
+    wrap: "span.hi"
+  });
+
+  block.push("fa", {
+    tag: "fa",
+    wrap: "span.faw"
+  });
+
+  block.push("com", {
+    tag: "com",
+    wrap: "span.com"
+  });
+
   ["left", "right", "center"].forEach(dir => {
-    md.block.bbcode.ruler.push(dir, {
+    inline.push(dir, {
+      tag: dir,
+      wrap: wrap("div", "style", () => "text-align:" + dir)
+    });
+    block.push(dir, {
       tag: dir,
       wrap: function (token) {
         token.attrs = [["style", "text-align:" + dir]];
@@ -136,13 +179,13 @@ function setupMarkdownIt(md) {
     });
   });
 
-  md.block.bbcode.ruler.push("indent", {
+  block.push("indent", {
     tag: "indent",
     wrap: "blockquote.indent"
   });
 
   ["ot", "edit"].forEach(tag => {
-    md.block.bbcode.ruler.push("ot", {
+    block.push("ot", {
       tag: tag,
       before: function (state) {
         let token = state.push("sepquote_open", "div", 1);
@@ -165,7 +208,7 @@ function setupMarkdownIt(md) {
   });
 
   ["list", "ul", "ol"].forEach(tag => {
-    md.block.bbcode.ruler.push(tag, {
+    block.push(tag, {
       tag: tag,
       replace: function (state, tagInfo, content) {
         let ol = tag === "ol" || (tag === "list" && tagInfo.attrs._default);
