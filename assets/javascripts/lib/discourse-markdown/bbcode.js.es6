@@ -54,19 +54,7 @@ function setupMarkdownIt(md) {
 
   inline.push("mod", {
     tag: "mod",
-    replace: function (state, tagInfo, content) {
-      state.push("mod_open", "span", 1)
-        .attrs = [["class", "mod"]]
-
-      state.push("text", "", 0)
-        .content = I18n.t("bbcode.mod_open")
-      state.push("text", "", 0)
-        .content = content
-      state.push("text", "", 0)
-        .content = I18n.t("bbcode.mod_close")
-      state.push("mod_close", "span", -1)
-      return true;
-    }
+    wrap: "span.mod"
   });
 
   inline.push("highlight", {

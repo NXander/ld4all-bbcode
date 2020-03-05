@@ -3,5 +3,3 @@ en:
     bbcode:
       edit: 'Edit:'
       ot: 'Off Topic:'
-      mod_open: '<mod>'
-      mod_close: '</mod>'
