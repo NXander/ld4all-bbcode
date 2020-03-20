@@ -238,6 +238,24 @@ function setupMarkdownIt(md) {
       state.push("bbcode_close", "details", -1);
     }
   });
+
+  md.core.textPostProcess.ruler.push('shrug', {
+    matcher: /\/shrug/,
+    onMatch: function(buffer, matches, state) {
+         let token = new state.Token('text', '', 0);
+         token.content = '¯\\_(ツ)_/¯';
+         buffer.push(token);
+     }
+ });
+
+ md.core.textPostProcess.ruler.push('tableflip', {
+  matcher: /\/tableflip/,
+  onMatch: function(buffer, matches, state) {
+       let token = new state.Token('text', '', 0);
+       token.content = '(╯°□°)╯︵ ┻━┻';
+       buffer.push(token);
+   }
+});
 }
 
 export function setup(helper) {
