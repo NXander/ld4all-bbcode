@@ -222,40 +222,40 @@ function setupMarkdownIt(md) {
 
   md.block.bbcode.ruler.push("spoiler", {
     tag: "spoiler",
-    before: function(state, tagInfo) {
+    before: function (state, tagInfo) {
       state.push("bbcode_open", "details", 1)
         .attrs = [["class", "spoiler"]];
       state.push("bbcode_open", "summary", 1)
         .attrs = [["class", "spoiler-title"]];
-  
+
       let token = state.push("text", "", 0);
       token.content = "SPOILER - Click to view";
-  
+
       state.push("bbcode_close", "summary", -1);
     },
-  
-    after: function(state) {
+
+    after: function (state) {
       state.push("bbcode_close", "details", -1);
     }
   });
 
   md.core.textPostProcess.ruler.push('shrug', {
     matcher: /\/shrug/,
-    onMatch: function(buffer, matches, state) {
-         let token = new state.Token('text', '', 0);
-         token.content = '¯\\_(ツ)_/¯';
-         buffer.push(token);
-     }
- });
+    onMatch: function (buffer, matches, state) {
+      let token = new state.Token('text', '', 0);
+      token.content = '¯\\_(ツ)_/¯';
+      buffer.push(token);
+    }
+  });
 
- md.core.textPostProcess.ruler.push('tableflip', {
-  matcher: /\/tableflip/,
-  onMatch: function(buffer, matches, state) {
-       let token = new state.Token('text', '', 0);
-       token.content = '(╯°□°)╯︵ ┻━┻';
-       buffer.push(token);
-   }
-});
+  md.core.textPostProcess.ruler.push('tableflip', {
+    matcher: /\/tableflip/,
+    onMatch: function (buffer, matches, state) {
+      let token = new state.Token('text', '', 0);
+      token.content = '(╯°□°)╯︵ ┻━┻';
+      buffer.push(token);
+    }
+  });
 }
 
 export function setup(helper) {
