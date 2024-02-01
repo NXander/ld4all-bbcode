@@ -1,0 +1,4 @@
+plugins:
+  ld4all_bbcode_enabled:
+    default: true
+    client: true

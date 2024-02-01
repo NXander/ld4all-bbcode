@@ -1,9 +1,3 @@
-import { registerOption } from "pretty-text/pretty-text";
-
-registerOption(
-  (siteSettings, opts) => (opts.features["vbulletin-bbcode"] = true)
-);
-
 function wrap(tag, attrs, callback, startContent, endContent) {
   return function (startToken, endToken, tagInfo, content) {
     startToken.tag = endToken.tag = tag;
@@ -295,6 +289,10 @@ export function setup(helper) {
         return /^text-align:(center|left|right)$/.exec(value);
       }
     }
+  });
+
+  helper.registerOptions((opts, siteSettings) => {
+    opts.features["ld4all-bbcode"] = !!siteSettings.ld4all_bbcode_enabled;
   });
 
   if (helper.markdownIt) {
