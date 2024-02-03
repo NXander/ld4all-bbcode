@@ -253,7 +253,7 @@ function setupMarkdownIt(md) {
 }
 
 export function setup(helper) {
-  helper.whiteList([
+  helper.allowList([
     "div.highlight",
     "span.highlight",
     "span.djtitle",
@@ -277,7 +277,7 @@ export function setup(helper) {
     "summary.spoiler-title"
   ]);
 
-  helper.whiteList({
+  helper.allowList({
     custom(tag, name, value) {
       if (tag === "font" && name === "style") {
         return /^(font-size:(xx-small|x-small|small|medium|large|x-large|xx-large|([0-9][0-9]?[0-9]?\%)))$/.exec(
@@ -291,9 +291,9 @@ export function setup(helper) {
     }
   });
 
-  helper.registerOptions((opts, siteSettings) => {
-    opts.features["ld4all-bbcode"] = !!siteSettings.ld4all_bbcode_enabled;
-  });
+  // helper.registerOptions((opts, siteSettings) => {
+  //   opts.features["ld4all-bbcode"] = !!siteSettings.ld4all_bbcode_enabled;
+  // });
 
   if (helper.markdownIt) {
     helper.registerPlugin(setupMarkdownIt);
