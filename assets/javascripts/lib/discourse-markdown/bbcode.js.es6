@@ -291,10 +291,6 @@ export function setup(helper) {
     }
   });
 
-  // helper.registerOptions((opts, siteSettings) => {
-  //   opts.features["ld4all-bbcode"] = !!siteSettings.ld4all_bbcode_enabled;
-  // });
-
   if (helper.markdownIt) {
     helper.registerPlugin(setupMarkdownIt);
     return;
