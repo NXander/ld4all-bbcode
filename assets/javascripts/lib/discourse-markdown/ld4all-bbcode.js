@@ -25,8 +25,32 @@ function wrap(tag, attrs, callback, startContent, endContent) {
   };
 }
 
+function blockWrap(tag, attrs, callback) {
+  return function (token, tagInfo) {
+    token.tag = tag;
+    token.attrs = [];
+
+    if (Array.isArray(attrs)) {
+      attrs.forEach(attr =>
+        token.attrs.push([
+          attr[0],
+          attr[1] instanceof Function ? attr[1](tagInfo) : attr[1]
+        ])
+      );
+    } else {
+      token.attrs.push([
+        attrs,
+        callback ? callback(tagInfo) : tagInfo.attrs._default
+      ]);
+    }
+
+    return true;
+  };
+}
+
 function setupMarkdownIt(md) {
   const ruler = md.inline.bbcode.ruler;
+  const blockRuler = md.block.bbcode.ruler;
 
   ruler.push("size", {
     tag: "size",
@@ -39,10 +63,25 @@ function setupMarkdownIt(md) {
         return "font-size:" + (size > maxSize ? maxSize : size) + "%";
       })
   });
+  blockRuler.push("size", {
+    tag: "size",
+    wrap: blockWrap("div", "style", tagInfo => {
+      const maxSize = 250;
+      let size = tagInfo.attrs._default.trim();
+      return "font-size:" + (size > maxSize ? maxSize : size) + "%";
+    })
+  });
 
   ruler.push("color", {
     tag: "color",
     wrap: wrap("font", [
+      ["class", "colored"],
+      ["color", tagInfo => tagInfo.attrs._default]
+    ])
+  });
+  blockRuler.push("color", {
+    tag: "color",
+    wrap: blockWrap("div", [
       ["class", "colored"],
       ["color", tagInfo => tagInfo.attrs._default]
     ])
@@ -52,51 +91,64 @@ function setupMarkdownIt(md) {
     tag: "mod",
     wrap: "span.mod"
   });
+  blockRuler.push("mod", { tag: "mod", wrap: "div.mod" });
 
   ruler.push("highlight", {
     tag: "highlight",
     wrap: "span.highlight"
   });
+  blockRuler.push("highlight", { tag: "highlight", wrap: "div.highlight" });
 
   ruler.push("small", {
     tag: "small",
     wrap: wrap("span", "style", () => "font-size:x-small")
+  });
+  blockRuler.push("small", {
+    tag: "small",
+    wrap: blockWrap("div", "style", () => "font-size:x-small")
   });
 
   ruler.push("title", {
     tag: "title",
     wrap: "span.djtitle"
   });
+  blockRuler.push("title", { tag: "title", wrap: "div.djtitle" });
 
   ruler.push("ld", {
     tag: "ld",
     wrap: "span.ld"
   });
+  blockRuler.push("ld", { tag: "ld", wrap: "div.ld" });
 
   ruler.push("nd", {
     tag: "nd",
     wrap: "span.nd"
   });
+  blockRuler.push("nd", { tag: "nd", wrap: "div.nd" });
 
   ruler.push("fld", {
     tag: "fld",
     wrap: "span.fld"
   });
+  blockRuler.push("fld", { tag: "fld", wrap: "div.fld" });
 
   ruler.push("hi", {
     tag: "hi",
     wrap: "span.hi"
   });
+  blockRuler.push("hi", { tag: "hi", wrap: "div.hi" });
 
   ruler.push("fa", {
     tag: "fa",
     wrap: "span.faw"
   });
+  blockRuler.push("fa", { tag: "fa", wrap: "div.faw" });
 
   ruler.push("com", {
     tag: "com",
     wrap: "span.com"
   });
+  blockRuler.push("com", { tag: "com", wrap: "div.com" });
 
   ruler.push("aname", {
     tag: "aname",
@@ -268,11 +320,22 @@ export function setup(helper) {
     "span.faw",
     "span.com",
     "span.mod",
+    "div.colored",
+    "div.djtitle",
+    "div.ld",
+    "div.nd",
+    "div.fld",
+    "div.hi",
+    "div.faw",
+    "div.com",
+    "div.mod",
     "div.edit",
     "div.ot",
     "span.smallfont",
     "blockquote.indent",
     "span.colored",
+    "div[style=\"font-size:*\"]",
+    "div.colored[color=*]",
     "font[color=*]",
     "font.colored",
     "font[style=\"font-size:*\"]",
